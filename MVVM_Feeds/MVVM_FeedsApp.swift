@@ -11,7 +11,7 @@ import SwiftUI
 struct MVVM_FeedsApp: App {
     var body: some Scene {
         WindowGroup {
-            LoginView()
+            FeedsView()
         }
     }
 }

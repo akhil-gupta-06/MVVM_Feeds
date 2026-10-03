@@ -16,9 +16,10 @@ struct FeedsView: View {
             contentView
                 .navigationTitle("Feeds")
                 .navigationBarBackButtonHidden()
-                .navigationDestination(for: Feed.ID.self) { feedId in
-                    if let feed = feedsViewModel.feeds.first(where: { $0.id == feedId }) {
-                        FeedDetailView(feed: feed, feedViewModel: feedsViewModel)
+                .navigationDestination(for: Feed.ID.self) { feedID in
+                    if let index = feedsViewModel.feeds.firstIndex(where: { $0.feedID == feedID }) {
+                        let selectedFeed = $feedsViewModel.feeds[index]
+                        FeedDetailView(feed: selectedFeed)
                     }
                 }
                 .navigationDestination(isPresented: $isNewFeed) {
@@ -60,7 +61,7 @@ struct FeedsView: View {
     /*var feedsList: some View {
         List {
             ForEach(feedsViewModel.feeds) { feed in
-                NavigationLink(value: feed.id) {
+                NavigationLink(value: feed) {
                     FeedRow(feed: feed, isfeedsScrollViewBased: false)
                 }
                 .swipeActions(edge: .trailing) {
