@@ -13,72 +13,70 @@ struct FeedsView: View {
     
     var body: some View {
         NavigationStack {
-            contentView
-                .navigationTitle("Feeds")
-                .navigationBarBackButtonHidden()
-                .navigationDestination(for: Feed.ID.self) { feedID in
-                    if let index = feedsViewModel.feeds.firstIndex(where: { $0.feedID == feedID }) {
-                        let selectedFeed = $feedsViewModel.feeds[index]
-                        FeedDetailView(feed: selectedFeed)
+            Group {
+                switch feedsViewModel.fetchStatus {
+                case .idle:
+                    EmptyView()
+                case .loading:
+                    ProgressView("Loading...")
+                case .success:
+                    //            feedsList - Use for Swipe actions
+                    feedsScrollView
+                case .failure:
+                    ContentUnavailableView("No Feeds Available", systemImage: "exclamationmark.triangle")
+                }
+            }
+            
+            .navigationTitle("Feeds")
+            .navigationBarBackButtonHidden()
+            .navigationDestination(for: Feed.ID.self) { feedID in
+                if let index = feedsViewModel.feeds.firstIndex(where: { $0.feedID == feedID }) {
+                    let selectedFeed = $feedsViewModel.feeds[index]
+                    FeedDetailView(feed: selectedFeed)
+                }
+            }
+            .navigationDestination(isPresented: $isNewFeed) {
+                NewFeedView(feedsViewModel: feedsViewModel)
+            }
+            .toolbar{
+                ToolbarItem {
+                    Button {
+                        isNewFeed = true
+                    } label: {
+                        Image(systemName: "plus")
                     }
                 }
-                .navigationDestination(isPresented: $isNewFeed) {
-                    NewFeedView(feedsViewModel: feedsViewModel)
-                }
-                .toolbar{
-                    ToolbarItem {
-                        Button {
-                            isNewFeed = true
-                        } label: {
-                            Image(systemName: "plus")
-                        }
-                    }
-                }
-                .task {
-                    guard feedsViewModel.feeds.isEmpty else { return }
-                    await feedsViewModel.fetchFeeds()
-                }
-        }
-    }
-    
-    @ViewBuilder
-    var contentView: some View {
-        switch feedsViewModel.fetchStatus {
-        case .idle:
-            EmptyView()
-        case .loading:
-            ProgressView("Loading...")
-        case .success:
-//            feedsList - Use for Swipe actions
-            feedsScrollView
-        case .failure:
-            ContentUnavailableView("No Feeds Available", systemImage: "exclamationmark.triangle")
+            }
+            .task {
+                guard feedsViewModel.feeds.isEmpty else { return }
+                await feedsViewModel.fetchFeeds()
+            }
         }
     }
     
     // List: built-in swipe actions, refreshable, cell recycling like UITableView.
     // Best for standard row-based UI with system behaviours.
     /*var feedsList: some View {
-        List {
-            ForEach(feedsViewModel.feeds) { feed in
-                NavigationLink(value: feed) {
-                    FeedRow(feed: feed, isfeedsScrollViewBased: false)
-                }
-                .swipeActions(edge: .trailing) {
-                    Button(role: .destructive) {
-                        Task { await feedsViewModel.deleteFeed(feed: feed) }
-                    } label: {
-                        Label("Delete", systemImage: "trash")
-                    }
-                }
-            }
-        }
-        .listStyle(.plain)
-        .refreshable {
-            await feedsViewModel.fetchFeeds()
-        }
-    }
-*/
+     List {
+     ForEach(feedsViewModel.feeds) { feed in
+     NavigationLink(value: feed) {
+     FeedRow(feed: feed, isfeedsScrollViewBased: false)
+     }
+     .swipeActions(edge: .trailing) {
+     Button(role: .destructive) {
+     Task { await feedsViewModel.deleteFeed(feed: feed) }
+     } label: {
+     Label("Delete", systemImage: "trash")
+     }
+     }
+     }
+     }
+     .listStyle(.plain)
+     .refreshable {
+     await feedsViewModel.fetchFeeds()
+     }
+     }
+     */
     // ScrollView + LazyVStack: full layout control, no list chrome.
     // Swipe actions don't work here — needs custom gesture handling.
     var feedsScrollView: some View {
