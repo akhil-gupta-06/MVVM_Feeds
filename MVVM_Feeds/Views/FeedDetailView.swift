@@ -47,6 +47,6 @@ struct FeedDetailView: View {
 }
 
 #Preview {
-    @Previewable @State var feed = Feed(feedID: 01, body: "Test body", author: Author(avatarURL: nil, name: "Akhil"))
+    @Previewable @State var feed = Feed(feedID: 01, body: "Test body", createdAt: "2026-09-01T08:23:00Z", author: Author(avatarURL: nil, name: "Akhil"))
     FeedDetailView(feed: $feed)
 }

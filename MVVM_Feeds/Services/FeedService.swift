@@ -6,7 +6,7 @@
 //
 
 protocol FeedServiceProtocol {
-    func fetchFeeds() async throws -> [Feed]
+    func fetchFeeds(afterTimeStamp: String?) async throws -> [Feed]
     func updateFeed(feedId: Int, feedBody: String) async throws -> Feed
     func addFeed(feedBody: String, feedAuthor: Author?) async throws -> Feed
     func deleteFeed(feedId: Int) async throws
@@ -19,8 +19,12 @@ class FeedService: FeedServiceProtocol {
         self.networkService = networkService
     }
     
-    func fetchFeeds() async throws -> [Feed] {
-        return try await self.networkService.makeCall(path: URLAndPathConstants.Feed.fetchFeeds)
+    func fetchFeeds(afterTimeStamp: String? = nil) async throws -> [Feed] {
+        var params: [String: String] = [:]
+        if let ts = afterTimeStamp {
+            params["timeStamp"] = ts
+        }
+        return try await self.networkService.makeCall(path: URLAndPathConstants.Feed.fetchFeeds, queryParams: params)
     }
     
     func updateFeed(feedId: Int, feedBody: String) async throws -> Feed {

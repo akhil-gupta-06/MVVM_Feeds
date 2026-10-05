@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__xcode__XcodeListWindows",
+      "mcp__xcode__XcodeRead",
+      "mcp__xcode__XcodeUpdate",
+      "mcp__xcode__BuildProject"
+    ]
+  }
+}

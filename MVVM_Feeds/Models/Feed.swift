@@ -12,10 +12,11 @@ struct Feed: Identifiable, Hashable, Decodable {
     let feedID: Int
     var id: Int { feedID }
     var body: String
+    let createdAt: String
     let author: Author?
     
     enum CodingKeys: String, CodingKey {
-        case body, author
+        case body, author, createdAt
         case feedID = "feedId"
     }
 }

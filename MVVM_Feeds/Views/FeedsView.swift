@@ -10,6 +10,12 @@ import SwiftUI
 struct FeedsView: View {
     @State var feedsViewModel = FeedViewModel(feedService: FeedService())
     @State var isNewFeed: Bool = false
+    @State private var searchText = ""
+
+    var filteredFeeds: [Feed] {
+        guard !searchText.isEmpty else { return feedsViewModel.feeds }
+        return feedsViewModel.feeds.filter { $0.body.localizedCaseInsensitiveContains(searchText) }
+    }
     
     var body: some View {
         NavigationStack {
@@ -50,7 +56,12 @@ struct FeedsView: View {
             .task {
                 guard feedsViewModel.feeds.isEmpty else { return }
                 await feedsViewModel.fetchFeeds()
+                await feedsViewModel.prePendFeeds()
             }
+            
+            .searchable(text: $searchText,
+                        placement: .navigationBarDrawer(displayMode: .always),
+                        prompt: "Search feeds")
         }
     }
     
@@ -82,7 +93,7 @@ struct FeedsView: View {
     var feedsScrollView: some View {
         ScrollView {
             LazyVStack {
-                ForEach(feedsViewModel.feeds) { feed in
+                ForEach(filteredFeeds) { feed in
                     NavigationLink(value: feed.id) {
                         FeedRow(feed: feed, isfeedsScrollViewBased: true)
                     }
@@ -154,6 +165,6 @@ struct CachedImage: View {
 }
 
 #Preview {
-    FeedRow(feed: Feed(feedID: 01, body: "Test body Test bodyTest bodyTest bodyTest bodyTest bodyTest bodyTest bodyTest bodyTest bodyTest body", author: Author(avatarURL: URL(string: "https://i.pravatar.cc/150?u=2"), name: "Akhil")), isfeedsScrollViewBased: false)
+    FeedRow(feed: Feed(feedID: 01, body: "Test body Test bodyTest bodyTest bodyTest bodyTest bodyTest bodyTest bodyTest bodyTest bodyTest body", createdAt: "2026-09-01T08:23:00Z", author: Author(avatarURL: URL(string: "https://i.pravatar.cc/150?u=2"), name: "Akhil")), isfeedsScrollViewBased: false)
     //    FeedsView()
 }

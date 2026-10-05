@@ -29,7 +29,7 @@ final class FeedDetailViewModel {
             updatedFeed = try await feedService.updateFeed(feedId: feed.feedID, feedBody: feed.body)
         } catch {
             // Mock: simulate success with local data
-            updatedFeed = Feed(feedID: feed.feedID, body: feed.body, author: feed.author)
+            updatedFeed = Feed(feedID: feed.feedID, body: feed.body, createdAt: "2026-09-01T08:23:00Z", author: feed.author)
         }
     }
 }
