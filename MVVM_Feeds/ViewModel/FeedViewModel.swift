@@ -22,6 +22,10 @@ final class FeedViewModel {
     var feeds: [Feed] = []
     var fetchStatus: FetchStatus = .idle
     var feedFetchError: String?
+    var nextFeedsCusrsor: String? = nil
+    var hasMoreFeeds = true
+    var isFeedsloading: Bool = false
+    
     let feedService: FeedServiceProtocol
     
     init(feedService: FeedServiceProtocol) {
@@ -29,9 +33,14 @@ final class FeedViewModel {
     }
     
     func fetchFeeds() async {
+        guard !isFeedsloading, hasMoreFeeds else { return }
         fetchStatus = .loading
+        isFeedsloading = true
         do {
-            feeds = try await feedService.fetchFeeds(afterTimeStamp: nil)
+            let feedPage = try await feedService.fetchFeeds(afterTimeStamp: nil, nextFeedsCusrsor: nextFeedsCusrsor)
+            feeds += feedPage.feeds
+            nextFeedsCusrsor = feedPage.nextFeedsCusrsor
+            hasMoreFeeds = (nextFeedsCusrsor != nil) && (nextFeedsCusrsor?.isEmpty == false)
             fetchStatus = .success
         } catch {
             try? await Task.sleep(for: .seconds(1))
@@ -39,6 +48,14 @@ final class FeedViewModel {
             /*fetchStatus = .failure
              feedFetchError = error.localizedDescription*/
         }
+        isFeedsloading = false
+    }
+
+    func refreshFeeds() async {
+        feeds = []
+        nextFeedsCusrsor = nil
+        hasMoreFeeds = true
+        await fetchFeeds()
     }
     
     func fetchFeedsMock() {
@@ -72,7 +89,8 @@ final class FeedViewModel {
             
             guard let lastTimestamp = feeds.first?.createdAt else { continue }
             do {
-                let newFeeds = try await feedService.fetchFeeds(afterTimeStamp: lastTimestamp)
+                let feedPage = try await feedService.fetchFeeds(afterTimeStamp: lastTimestamp, nextFeedsCusrsor: nil)
+                let newFeeds = feedPage.feeds
                 let existingFeedIds = Set(feeds.map { $0.id })
                 let uniqueNewFeeds = newFeeds.filter { !existingFeedIds.contains($0.id) }
                 if !uniqueNewFeeds.isEmpty {

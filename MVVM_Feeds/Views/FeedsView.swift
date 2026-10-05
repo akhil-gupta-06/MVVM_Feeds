@@ -56,7 +56,7 @@ struct FeedsView: View {
             .task {
                 guard feedsViewModel.feeds.isEmpty else { return }
                 await feedsViewModel.fetchFeeds()
-                await feedsViewModel.prePendFeeds()
+//                await feedsViewModel.prePendFeeds()
             }
             
             .searchable(text: $searchText,
@@ -90,19 +90,28 @@ struct FeedsView: View {
      */
     // ScrollView + LazyVStack: full layout control, no list chrome.
     // Swipe actions don't work here — needs custom gesture handling.
+    private let prefetchThreshold = 3
+
     var feedsScrollView: some View {
         ScrollView {
             LazyVStack {
-                ForEach(filteredFeeds) { feed in
+                ForEach(Array(filteredFeeds.enumerated()), id: \.element.id) { index, feed in
                     NavigationLink(value: feed.id) {
                         FeedRow(feed: feed, isfeedsScrollViewBased: true)
+                            .onAppear {
+                                if index == feedsViewModel.feeds.count - prefetchThreshold {
+                                    Task {
+                                        await feedsViewModel.fetchFeeds()
+                                    }
+                                }
+                            }
                     }
                     .buttonStyle(.plain)
                 }
             }
         }
         .refreshable {
-            await feedsViewModel.fetchFeeds()
+            await feedsViewModel.refreshFeeds()
         }
     }
 }

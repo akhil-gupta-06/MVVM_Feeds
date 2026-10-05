@@ -7,6 +7,11 @@
 
 import Foundation
 
+struct FeedPage: Hashable, Decodable {
+    let feeds: [Feed]
+    let nextFeedsCusrsor: String?
+}
+
 /// Server has "feedId" as unique key
 struct Feed: Identifiable, Hashable, Decodable {
     let feedID: Int
