@@ -8,43 +8,42 @@
 import Foundation
 import UIKit
 
-final class ImageLoader {
+actor ImageLoader {
     static let shared = ImageLoader()
-    var cachedImage: UIImage?
-    
-    func loadImage(url: URL) async -> UIImage?  {
-        if let existingCachedImage = ImageCache.shared.getImage(url: url) {
-            return  existingCachedImage
+    private var inFlightTasks = [URL: Task<UIImage?, Never>]()
+
+    func loadImage(url: URL) async -> UIImage? {
+        if let cached = await ImageCache.shared.getImage(url: url) {
+            return cached
         }
-        else {
-            var inFlightTasks = [URL: Task<UIImage?, Never>]()
-            if let inFlightTask = inFlightTasks[url] {
-                return await inFlightTask.value
-            }
-            
-            let result: Task<UIImage?, Never> = Task {
-                do {
-                    let (data, resp) = try await URLSession.shared.data(from: url)
-                    if let image = UIImage(data: data), let httpResponse = resp as? HTTPURLResponse, httpResponse.statusCode == 200 {
-                        ImageCache.shared.saveImage(url: url, uiImage: image)
-                        return image
-                    }
-                }
-                catch {
-                    print(error.localizedDescription)
-                }
-                return nil
-            }
-            inFlightTasks[url] = result
-            let image = await result.value
-            inFlightTasks[url] = nil
-            return image
+
+        if let existing = inFlightTasks[url] {
+            return await existing.value
         }
+
+        let task = Task<UIImage?, Never> {
+            do {
+                let (data, resp) = try await URLSession.shared.data(from: url)
+                if let httpResponse = resp as? HTTPURLResponse, httpResponse.statusCode == 200,
+                   let image = UIImage(data: data) {
+                    await ImageCache.shared.saveImage(url: url, uiImage: image)
+                    return image
+                }
+            } catch {
+                print(error.localizedDescription)
+            }
+            return nil
+        }
+
+        inFlightTasks[url] = task
+        let image = await task.value
+        inFlightTasks[url] = nil
+        return image
     }
 }
 
 
-final class ImageCache {
+actor ImageCache {
     static let shared = ImageCache()
     private let cache = NSCache<NSString, UIImage>()
     
